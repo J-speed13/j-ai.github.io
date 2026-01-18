@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>J-AI | Creative Studio Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -52,7 +52,10 @@
             justify-content: center;
         }
         .gen-image img { width: 100%; height: auto; border-radius: 0.5rem; }
-        .gen-image:hover { transform: scale(1.01); }
+        
+        @media (hover: hover) {
+            .gen-image:hover { transform: scale(1.01); }
+        }
 
         /* Visualizer Bars */
         .visualizer { display: flex; align-items: flex-end; gap: 2px; height: 20px; }
@@ -60,46 +63,46 @@
         @keyframes sound { 0%, 100% { height: 20%; } 50% { height: 100%; } }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden selection:bg-cyan-500 selection:text-white">
+<body class="h-screen h-[100dvh] flex flex-col overflow-hidden selection:bg-cyan-500 selection:text-white">
 
     <!-- Header -->
-    <header class="bg-slate-900/80 backdrop-blur border-b border-slate-700 p-4 shadow-lg z-20 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)]">
-                <span class="font-mono font-bold text-xl text-white">J</span>
+    <header class="bg-slate-900/80 backdrop-blur border-b border-slate-700 p-3 md:p-4 shadow-lg z-20 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-2 md:space-x-3">
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                <span class="font-mono font-bold text-lg md:text-xl text-white">J</span>
             </div>
             <div>
-                <h1 class="font-bold text-lg tracking-wide text-white">J-AI <span class="text-xs text-cyan-400 font-normal">Studio Pro</span></h1>
+                <h1 class="font-bold text-base md:text-lg tracking-wide text-white">J-AI <span class="text-xs text-cyan-400 font-normal">Studio Pro</span></h1>
                 <div class="flex items-center space-x-2">
-                    <span class="status-dot h-2 w-2 rounded-full bg-slate-500 transition-colors duration-300"></span>
-                    <span id="system-status" class="text-[10px] text-slate-400 uppercase tracking-wider font-mono">System Ready</span>
+                    <span class="status-dot h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-slate-500 transition-colors duration-300"></span>
+                    <span id="system-status" class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-wider font-mono">System Ready</span>
                 </div>
             </div>
         </div>
         <div class="flex gap-2">
-            <button onclick="stopMusic()" id="stop-btn" class="hidden text-red-400 hover:text-red-300 text-xs border border-red-900/50 bg-red-900/20 px-3 py-1.5 rounded transition-all">
-                <i class="fas fa-stop mr-1"></i> STOP AUDIO
+            <button onclick="stopMusic()" id="stop-btn" class="hidden text-red-400 hover:text-red-300 text-xs border border-red-900/50 bg-red-900/20 px-2 py-1 md:px-3 md:py-1.5 rounded transition-all">
+                <i class="fas fa-stop md:mr-1"></i> <span class="hidden md:inline">STOP</span>
             </button>
-            <button onclick="clearChat()" class="text-slate-400 hover:text-white transition-colors text-xs px-3 py-1.5 rounded hover:bg-slate-800">
+            <button onclick="clearChat()" class="text-slate-400 hover:text-white transition-colors text-xs px-2 py-1 md:px-3 md:py-1.5 rounded hover:bg-slate-800">
                 <i class="fas fa-trash-alt"></i>
             </button>
         </div>
     </header>
 
     <!-- Chat Area -->
-    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-[#0b0f19] relative">
+    <main id="chat-container" class="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-6 bg-[#0b0f19] relative scroll-smooth">
         <div class="absolute inset-0 opacity-5 pointer-events-none bg-[linear-gradient(rgba(59,130,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
         
         <!-- Intro Message -->
         <div class="flex items-start space-x-3 message-anim relative z-10">
             <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-600 to-cyan-500 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white">J</div>
-            <div class="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-none p-4 max-w-[85%] md:max-w-[70%] shadow-xl">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-none p-3 md:p-4 max-w-[90%] md:max-w-[70%] shadow-xl">
                 <p class="text-sm leading-relaxed text-slate-200">
                     <strong class="text-cyan-400">Update Complete.</strong> I can now generate real images and synthesize full musical tracks.<br><br>
                     <span class="text-xs font-mono text-slate-400 uppercase">Capabilities:</span>
                     <ul class="mt-2 space-y-2 text-slate-300 text-sm">
                         <li class="flex items-center gap-2"><i class="fas fa-image text-purple-400"></i> "Draw a cyberpunk cat"</li>
-                        <li class="flex items-center gap-2"><i class="fas fa-music text-green-400"></i> "Play Techno", "Play Ambient", "Play Drums"</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-music text-green-400"></i> "Play Techno", "Play Ambient"</li>
                         <li class="flex items-center gap-2"><i class="fas fa-pen text-yellow-400"></i> "Write an essay about AI"</li>
                     </ul>
                 </p>
@@ -117,21 +120,21 @@
     </div>
 
     <!-- Input Area -->
-    <footer class="bg-slate-900 border-t border-slate-700 p-4 z-20">
-        <form id="chat-form" class="max-w-4xl mx-auto relative flex items-center gap-3">
+    <footer class="bg-slate-900 border-t border-slate-700 p-3 md:p-4 z-20 shrink-0">
+        <form id="chat-form" class="max-w-4xl mx-auto relative flex items-center gap-2 md:gap-3">
             <div class="relative flex-1">
                 <input 
                     type="text" 
                     id="user-input" 
-                    class="w-full bg-slate-950 text-white placeholder-slate-500 rounded-xl py-3.5 pl-5 pr-12 border border-slate-700 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-mono text-sm shadow-inner"
-                    placeholder="Command: 'Draw a city' or 'Play Ambient'..." 
+                    class="w-full bg-slate-950 text-white placeholder-slate-500 rounded-xl py-3 pl-4 pr-4 md:pl-5 md:pr-12 border border-slate-700 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-mono text-sm shadow-inner"
+                    placeholder="Command: 'Draw a city'..." 
                     autocomplete="off"
                 >
-                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-mono">PRO_MODE</div>
+                <div class="hidden sm:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-mono">PRO_MODE</div>
             </div>
             <button 
                 type="submit" 
-                class="bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl p-3.5 w-12 flex items-center justify-center transition-all shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)]"
+                class="bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl p-3 md:p-3.5 w-10 md:w-12 flex items-center justify-center transition-all shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)]"
             >
                 <i class="fas fa-arrow-right"></i>
             </button>
@@ -173,12 +176,19 @@
             handleUserMessage();
         });
 
+        // Prevent zoom on double tap for iOS
+        document.addEventListener('dblclick', function(event) {
+            event.preventDefault();
+        }, { passive: false });
+
         function handleUserMessage() {
             const text = userInput.value.trim();
             if (!text) return;
 
             addMessage(text, 'user');
             userInput.value = '';
+            // Blur on mobile to close keyboard if needed, but keeping focus is usually better for chat
+            // userInput.blur(); 
             showTyping(true);
 
             // Initialize Audio on interaction
@@ -214,7 +224,7 @@
             avatar.innerText = isAI ? 'J' : 'U';
 
             const bubble = document.createElement('div');
-            bubble.className = `p-4 max-w-[85%] md:max-w-[70%] shadow-lg text-sm leading-relaxed ${
+            bubble.className = `p-3 md:p-4 max-w-[85%] md:max-w-[70%] shadow-lg text-sm leading-relaxed ${
                 isAI
                 ? 'bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-none text-slate-200'
                 : 'bg-cyan-700 text-white rounded-2xl rounded-tr-none'
@@ -241,7 +251,7 @@
             avatar.innerText = 'J';
 
             const container = document.createElement('div');
-            container.className = "bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-none p-4 max-w-[85%] shadow-lg w-full md:w-auto";
+            container.className = "bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-none p-3 md:p-4 max-w-[90%] md:max-w-[85%] shadow-lg w-full md:w-auto";
             
             const text = document.createElement('p');
             text.className = "text-sm text-slate-200 mb-2";
