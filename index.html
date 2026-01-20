@@ -2,401 +2,234 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>J-AI | Neural Companion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J-AI | Neural Core</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js'></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- MathJax for rendering Math formulas -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
-
-        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Inter:wght@400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; margin: 0; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .message-anim { animation: fadeIn 0.3s ease-out forwards; }
-        
-        /* Media & Visuals */
-        .gen-image { border-radius: 0.5rem; border: 1px solid #3b82f6; margin-top: 0.75rem; width: 100%; max-width: 512px; background: #1e293b; min-height: 200px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
-        .gen-image img { width: 100%; height: auto; transition: transform 0.5s; }
-        .video-wrapper { position: relative; width: 100%; max-width: 512px; aspect-ratio: 16/9; background: #000; border-radius: 0.5rem; overflow: hidden; border: 1px solid #ec4899; margin-top: 0.75rem; box-shadow: 0 0 20px rgba(236, 72, 153, 0.2); }
-        .video-content { width: 100%; height: 100%; object-fit: cover; animation: panZoom 20s infinite alternate ease-in-out; }
-        .video-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-        @keyframes panZoom { 0% { transform: scale(1); } 100% { transform: scale(1.3) translate(-5%, -2%); } }
-        .video-ui { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: flex; align-items: center; gap: 12px; z-index: 10; }
-        .play-icon { width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 10px solid #fff; }
-        .progress-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
-        .progress-fill { height: 100%; width: 0%; background: #ec4899; animation: progress 10s linear infinite; }
-        @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
-        .rec-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 4px; font-size: 10px; color: white; z-index: 10; backdrop-filter: blur(2px); border: 1px solid rgba(255,255,255,0.1); }
-        .rec-dot { width: 6px; height: 6px; background: #ef4444; border-radius: 50%; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-        
-        /* Markdown/Text Styles */
-        .ai-response h1, .ai-response h2, .ai-response h3 { font-weight: bold; color: #60a5fa; margin-top: 10px; margin-bottom: 5px; }
-        .ai-response p { margin-bottom: 8px; }
-        .ai-response ul { list-style-type: disc; padding-left: 20px; margin-bottom: 8px; }
-        .ai-response strong { color: #e2e8f0; }
-        
-        /* Code Editor Preview */
-        .code-block { background: #1e1e1e; border-radius: 8px; overflow: hidden; margin-top: 10px; font-family: 'Fira Code', monospace; font-size: 0.8rem; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .code-header { background: #252526; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; color: #ccc; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
-        .code-content { padding: 12px; color: #d4d4d4; overflow-x: auto; white-space: pre; line-height: 1.5; }
-        .copy-btn { background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 0.7rem; }
-        .copy-btn:hover { background: #333; color: #fff; border-color: #777; }
-        .copy-btn:active { transform: scale(0.95); }
-        
-        .live-preview-container { border: 1px solid #3b82f6; border-radius: 8px; margin-top: 10px; overflow: hidden; background: white; height: 200px; display: none; }
-        .live-preview-container.active { display: block; }
-        .preview-iframe { width: 100%; height: 100%; border: none; }
-        .btn-preview { background: #3b82f6; color: white; padding: 2px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; margin-right: 5px; }
-        .btn-preview:hover { background: #2563eb; }
-
-        /* Attachment Area */
-        #attachment-area { border-top: 1px solid #1e293b; background: #0f172a; transition: all 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .render-container { border: 1px solid #3b82f6; border-radius: 12px; overflow: hidden; margin-top: 10px; background: #000; box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+        .render-image { width: 100%; height: auto; display: block; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 </head>
-<body class="h-screen h-[100dvh] flex flex-col overflow-hidden selection:bg-cyan-500">
+<body class="h-screen flex flex-col overflow-hidden">
 
-    <header class="bg-slate-900/90 backdrop-blur border-b border-slate-700 p-3 md:p-4 shadow-lg z-20 flex items-center justify-between shrink-0">
+    <header class="bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between shadow-2xl">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-                <span class="font-mono font-bold text-xl text-white">J</span>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <span class="text-white font-bold text-xl">J</span>
             </div>
             <div>
-                <h1 class="font-bold text-white tracking-tight">J-AI <span class="text-cyan-400 text-xs">Neural Core</span></h1>
-                <span id="system-status" class="text-[9px] text-slate-500 uppercase tracking-widest font-mono">Real Intelligence Online</span>
+                <h1 class="font-bold text-white tracking-tight">J-AI</h1>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Online</span>
+                </div>
             </div>
         </div>
-        <div class="flex gap-2">
-            <button onclick="stopMusic()" id="stop-btn" class="hidden text-red-400 border border-red-900/50 bg-red-900/10 px-3 py-1 rounded text-xs">STOP AUDIO</button>
-            <button onclick="clearChat()" class="text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-slate-800"><i class="fas fa-trash-alt"></i></button>
-        </div>
+        <button onclick="window.location.reload()" class="text-slate-500 hover:text-white transition-colors"><i class="fas fa-redo"></i></button>
     </header>
 
-    <main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-6 bg-[#0b0f19] relative">
-        <div class="flex items-start space-x-3 message-anim">
-            <div class="w-8 h-8 rounded bg-cyan-600 flex-shrink-0 flex items-center justify-center text-xs text-white">J</div>
-            <div class="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-none p-4 max-w-[85%] text-sm text-slate-200">
-                <p><strong>System Connected to J-AI Neural Network.</strong></p>
-                <p class="mt-2 text-slate-300">I can now answer <em>any</em> question, analyze images, write code, and act as your creative partner.</p>
-                <ul class="mt-2 space-y-1 text-slate-400 text-xs font-mono">
-                    <li>> "What is in this image?" (Attach a photo)</li>
-                    <li>> "Write a Snake game in HTML/JS"</li>
-                    <li>> "Video of a cyberpunk city"</li>
-                </ul>
+    <main id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+        <div class="message-anim flex items-start space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-md">J</div>
+            <div class="bg-slate-800/50 border border-slate-700/50 p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] backdrop-blur-sm shadow-xl">
+                System Initialized. I am **J-AI**. 
+                <br><br>
+                Canvas disabled. Running on direct neural bridge.
             </div>
         </div>
     </main>
 
-    <div id="typing-indicator" class="hidden px-14 pb-4">
-        <div class="flex space-x-1"><span class="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-bounce"></span><span class="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-bounce" style="animation-delay:0.1s"></span><span class="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-bounce" style="animation-delay:0.2s"></span></div>
+    <div id="typing-indicator" class="hidden px-14 py-2 text-cyan-400 text-[10px] font-mono animate-pulse uppercase tracking-widest">
+        J-AI is thinking...
     </div>
 
-    <footer class="bg-slate-900 border-t border-slate-700 z-20 shrink-0">
-        <!-- Attachment Preview Area -->
-        <div id="attachment-area" class="hidden px-4 py-3 flex items-center gap-4">
-            <div class="relative group shrink-0">
-                <img id="preview-thumb" class="h-14 w-14 object-cover rounded-lg border border-cyan-500/50 shadow-lg">
-                <button onclick="clearAttachment()" class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md transition-colors">×</button>
+    <footer class="bg-slate-900 border-t border-slate-800">
+        <!-- Attachment Staging Area -->
+        <div id="attachment-preview" class="hidden px-4 py-2 border-b border-slate-800 bg-slate-900/50 flex items-center gap-3">
+            <div class="relative">
+                <img id="preview-img" class="h-16 w-16 object-cover rounded-lg border border-slate-600 shadow-md">
+                <button id="remove-attachment" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors shadow-sm">×</button>
             </div>
-            <div class="flex flex-col gap-1 w-full">
-                <div class="flex justify-between items-center">
-                    <span class="text-[10px] text-cyan-400 font-mono uppercase tracking-wider">Image Staged</span>
-                    <select id="vision-mode" class="bg-slate-800 text-slate-200 text-xs rounded border border-slate-600 px-2 py-1 outline-none focus:border-cyan-500">
-                        <option value="analyze">Ask J-AI (Vision)</option>
-                        <option value="ocr">Scan Text (OCR)</option>
-                    </select>
-                </div>
-                <p class="text-xs text-slate-500 italic">Add a message below to guide the analysis...</p>
+            <div class="flex flex-col">
+                <span class="text-xs text-white font-semibold">Image Attached</span>
+                <span class="text-[10px] text-slate-400 font-mono">Ready to scan or analyze with text.</span>
             </div>
         </div>
 
-        <!-- Input Bar -->
-        <div class="p-3 md:p-4 max-w-4xl mx-auto flex items-center gap-3">
-            <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-400 p-3 rounded-xl border border-slate-700 transition-all flex items-center justify-center h-[50px] w-[50px]">
+        <div class="p-4 max-w-4xl mx-auto flex items-center gap-3">
+            <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-400 p-3 rounded-xl border border-slate-700 transition-all flex items-center justify-center w-12 h-12 shadow-lg">
                 <i class="fas fa-paperclip"></i>
                 <input type="file" id="file-input" class="hidden" accept="image/*">
             </label>
-            <form id="chat-form" class="flex-1 flex gap-2">
-                <input type="text" id="user-input" class="flex-1 bg-slate-950 text-white rounded-xl py-3 px-4 border border-slate-700 outline-none text-sm font-mono focus:border-cyan-500 transition-all" placeholder="Ask J-AI or describe image...">
-                <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl px-5 transition-all shadow-lg"><i class="fas fa-paper-plane"></i></button>
-            </form>
+            <input type="text" id="user-in" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-5 py-3 text-white outline-none focus:border-cyan-500 font-mono text-sm transition-all" placeholder="Ask J-AI or say 'Draw a cat'...">
+            <button id="exec-btn" class="bg-blue-600 hover:bg-blue-500 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-lg">
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
     </footer>
 
     <script>
-        const apiKey = ""; // API Key injected by environment
-        const chatContainer = document.getElementById('chat-container');
-        const chatForm = document.getElementById('chat-form');
-        const userInput = document.getElementById('user-input');
+        const chatBox = document.getElementById('chat-box');
+        const userIn = document.getElementById('user-in');
+        const execBtn = document.getElementById('exec-btn');
+        const typing = document.getElementById('typing-indicator');
         const fileInput = document.getElementById('file-input');
-        const typingIndicator = document.getElementById('typing-indicator');
-        const attachmentArea = document.getElementById('attachment-area');
-        const previewThumb = document.getElementById('preview-thumb');
-        const visionMode = document.getElementById('vision-mode');
+        const attachmentPreview = document.getElementById('attachment-preview');
+        const previewImg = document.getElementById('preview-img');
+        const removeAttachmentBtn = document.getElementById('remove-attachment');
 
-        let currentAttachment = null;
+        let stagedImage = null;
 
-        // --- AI ENGINE (J-AI) ---
-        async function callGemini(prompt, imageBase64 = null) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        async function processJAI() {
+            const input = userIn.value.trim();
+            if (!input && !stagedImage) return;
+
+            // UI: Post user message
+            postUserMessage(input, stagedImage);
             
-            const parts = [{ text: prompt }];
+            // Capture state for processing
+            const processingImage = stagedImage;
+            const query = input.toLowerCase();
+
+            // Clear Inputs
+            userIn.value = '';
+            stagedImage = null;
+            attachmentPreview.classList.add('hidden');
             
-            if (imageBase64) {
-                // Strip the data:image/jpeg;base64, prefix
-                const base64Data = imageBase64.split(',')[1];
-                const mimeType = imageBase64.split(';')[0].split(':')[1];
-                parts.push({
-                    inline_data: {
-                        mime_type: mimeType,
-                        data: base64Data
+            typing.classList.remove('hidden');
+
+            // 1. Process Image Attachment (OCR) if present
+            let contextText = "";
+            if (processingImage) {
+                try {
+                    const result = await Tesseract.recognize(processingImage, 'eng');
+                    const extractedText = result.data.text.trim();
+                    if (extractedText) {
+                        contextText = ` [System Note: The user attached an image containing this text: "${extractedText}"]`;
+                        // Optionally inform user OCR worked
+                        // postMessage(`**OCR Info:** Read ${extractedText.length} characters from image.`, 'ai'); 
+                    } else {
+                        contextText = ` [System Note: The user attached an image, but no text was detected.]`;
                     }
-                });
+                } catch (e) {
+                    console.error("OCR Failed");
+                }
             }
 
-            const payload = {
-                contents: [{ parts: parts }],
-                systemInstruction: { parts: [{ text: "You are J-AI, an advanced AI creative assistant created by Jasper. You are helpful, concise, and knowledgeable. When writing code, wrap it in markdown code blocks. For general questions, provide clear, well-formatted answers. Never refer to yourself as Gemini or Google. You are J-AI." }] }
-            };
+            // 2. Logic: Is it a drawing request?
+            const drawingTriggers = ['draw', 'generate', 'create', 'image', 'picture', 'painting'];
+            const isDrawing = drawingTriggers.some(word => query.includes(word)) && !processingImage;
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await response.json();
+            if (isDrawing) {
+                // Generate Image
+                const seed = Math.floor(Math.random() * 1000000);
+                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(input)}?width=1024&height=1024&nologo=true&seed=${seed}`;
                 
-                if (data.error) {
-                    console.error("AI Error:", data.error);
-                    return "My AI connection is currently offline (Check API Key).";
-                }
-                
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                return "Connection to the AI brain failed.";
-            }
-        }
-
-        // --- TRACK LIBRARY (50 PRESETS) ---
-        const TRACK_LIBRARY = [
-            { id: 1, name: "Neon Tokyo", style: "Cyberpunk", bpm: 120, synth: "sawtooth", kickP: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
-            { id: 2, name: "Sunset Blvd", style: "Synthwave", bpm: 100, synth: "square", kickP: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0] },
-            { id: 3, name: "Deep Blue", style: "Ambient", bpm: 60, synth: "sine", kickP: [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
-            { id: 12, name: "Acid Rain", style: "Acid", bpm: 125, synth: "sawtooth", kickP: [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0] },
-            { id: 50, name: "Trip Hop", style: "Trip Hop", bpm: 95, synth: "sawtooth", kickP: [1,0,0,0,0,0,1,0] }
-        ];
-
-        // --- AUDIO ENGINE ---
-        let audioCtx = null; let isPlaying = false; let intervals = [];
-        function playTone(freq, type, duration, startTime, vol = 0.1) {
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.type = type; osc.frequency.setValueAtTime(freq, startTime);
-            gain.gain.setValueAtTime(vol, startTime); gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(startTime); osc.stop(startTime + duration);
-        }
-        function startMusicSequence(track) {
-            if (isPlaying) stopMusic(); if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            isPlaying = true; document.getElementById('stop-btn').classList.remove('hidden');
-            const spb = 60 / track.bpm;
-            const scheduler = setInterval(() => {
-                const now = audioCtx.currentTime;
-                for(let i=0; i<16; i++) { if(track.kickP && track.kickP[i]) playTone(150, 'sine', 0.5, now + i * (spb/4), 0.5); }
-                if(Math.random() > 0.3) playTone([220, 261, 329][Math.floor(Math.random()*3)], track.synth, 0.2, now + spb, 0.1);
-            }, (spb * 4) * 1000);
-            intervals.push(scheduler);
-        }
-        function stopMusic() { intervals.forEach(clearInterval); intervals = []; isPlaying = false; document.getElementById('stop-btn').classList.add('hidden'); }
-
-        // --- VIDEO FX ---
-        function initVideoFX(wrapper, type) {
-            const canvas = wrapper.querySelector('.video-canvas'); if(!canvas || !type) return;
-            const ctx = canvas.getContext('2d');
-            const particles = [];
-            canvas.width = wrapper.offsetWidth; canvas.height = wrapper.offsetHeight;
-            for(let i=0; i<100; i++) particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, s: Math.random()*2+1, l: 10 });
-            function animate() {
-                if(!document.contains(canvas)) return;
-                ctx.clearRect(0,0, canvas.width, canvas.height); ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth=1;
-                particles.forEach(p => { 
-                    if(type==='rain'){ ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y+p.l); ctx.stroke(); p.y+=p.s*4; }
-                    if(p.y > canvas.height) p.y=0; 
-                });
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
-
-        // --- MAIN LOGIC ROUTER ---
-        async function processLogic(input, image) {
-            const q = input.toLowerCase();
-
-            // 1. IMAGE/VISION HANDLING
-            if (image) {
-                const mode = visionMode.value;
-                if (mode === 'ocr') {
-                    // Tesseract Local OCR
-                    try {
-                        const result = await Tesseract.recognize(image, 'eng');
-                        return `**OCR Scan Result:**\n> ${result.data.text || "No readable text found."}`;
-                    } catch (e) { return "OCR Error: Could not read text."; }
-                } else {
-                    // J-AI Vision Analysis
-                    const prompt = input || "Describe this image in detail.";
-                    const response = await callGemini(prompt, image);
-                    return formatGeminiResponse(response);
-                }
-            }
-
-            // 2. MEDIA
-            if (q.includes("video")) return { type: 'video', src: `https://image.pollinations.ai/prompt/${encodeURIComponent(input)}?width=800&height=450&nologo=true&seed=${Math.random()}`, alt: input, fx: q.includes("rain") ? 'rain' : null };
-            if (q.includes("draw") || (q.includes("image") && (q.includes("make") || q.includes("create") || q.includes("generate")))) return { type: 'image', src: `https://image.pollinations.ai/prompt/${encodeURIComponent(input)}?width=512&height=512&nologo=true&seed=${Math.random()}`, alt: input };
-            if (q.includes("music") || q.includes("play")) return { type: 'music', style: TRACK_LIBRARY[0], text: "**Playing:** Track 1" };
-
-            // 3. EVERYTHING ELSE (J-AI LLM)
-            const response = await callGemini(input);
-            return formatGeminiResponse(response);
-        }
-
-        function formatGeminiResponse(text) {
-            if (text.includes("```")) {
-                const codeMatch = text.match(/```(\w+)?\n([\s\S]*?)```/);
-                if (codeMatch) {
-                    const lang = codeMatch[1] || 'plaintext';
-                    const code = codeMatch[2];
-                    return createCodeBlock(lang, code);
-                }
-            }
-            return `<div class="ai-response">${text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`;
-        }
-
-        function togglePreview(btn) {
-            const container = btn.closest('.code-block-wrapper').querySelector('.live-preview-container');
-            const iframe = container.querySelector('iframe');
-            
-            if (container.classList.contains('active')) {
-                container.classList.remove('active');
-                btn.innerText = "LAUNCH PREVIEW";
+                setTimeout(() => {
+                    postImage(imgUrl);
+                    typing.classList.add('hidden');
+                }, 500);
             } else {
-                container.classList.add('active');
-                btn.innerText = "CLOSE PREVIEW";
-                const code = btn.closest('.code-block-wrapper').querySelector('.raw-code').innerText;
-                const blob = new Blob([code], { type: 'text/html' });
-                iframe.src = URL.createObjectURL(blob);
+                // Generate Text Response (with image context if available)
+                try {
+                    const fullPrompt = input + contextText;
+                    const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(fullPrompt)}?system=You are J-AI, a helpful AI created by Jasper. You are fast and accurate. Never mention Google or Gemini.`);
+                    const data = await res.text();
+                    postMessage(data, 'ai');
+                } catch (e) {
+                    postMessage("Neural connection flickered. Please try that again.", 'ai');
+                }
+                typing.classList.add('hidden');
             }
         }
 
-        function createCodeBlock(type, codeContent) {
-            const isPreviewable = ['html', 'javascript', 'js', 'css'].includes(type.toLowerCase());
-            return `
-                <div class="code-block-wrapper">
-                    <div class="code-block">
-                        <div class="code-header">
-                            <span>${type.toUpperCase()}</span>
-                            <div>
-                                ${isPreviewable ? `<button class="btn-preview" onclick="togglePreview(this)">LAUNCH PREVIEW</button>` : ''}
-                                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block-wrapper').querySelector('.raw-code').innerText)">COPY</button>
-                            </div>
-                        </div>
-                        <div class="code-content raw-code">${codeContent.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
-                    </div>
-                    <div class="live-preview-container">
-                        <iframe class="preview-iframe"></iframe>
-                    </div>
+        function postMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `message-anim flex items-start space-x-3 ${sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`;
+            const bubbleClass = sender === 'ai' ? 'bg-slate-800 border-slate-700' : 'bg-blue-700 border-blue-600';
+            const icon = sender === 'ai' ? 'J' : 'U';
+            const iconBg = sender === 'ai' ? 'bg-blue-600' : 'bg-slate-700';
+
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-lg ${iconBg} flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-md">${icon}</div>
+                <div class="${bubbleClass} border p-4 rounded-2xl text-sm text-white max-w-[85%] leading-relaxed shadow-xl">
+                    ${text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
                 </div>
             `;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = userInput.value.trim();
-            // Allow sending if there is an image even if text is empty (for vision scan)
-            if (!text && !currentAttachment) return;
-
-            if (currentAttachment) {
-                addImageMessage(currentAttachment, "User Attachment");
+        function postUserMessage(text, imageSrc) {
+            const div = document.createElement('div');
+            div.className = `message-anim flex items-start space-x-3 flex-row-reverse space-x-reverse`;
+            
+            let contentHtml = '';
+            if (imageSrc) {
+                contentHtml += `<img src="${imageSrc}" class="rounded-lg max-h-48 mb-2 border border-blue-500/30">`;
             }
             if (text) {
-                addMessage(text, 'user');
+                contentHtml += `<span>${text.replace(/\n/g, '<br>')}</span>`;
             }
 
-            userInput.value = '';
-            typingIndicator.classList.remove('hidden');
-            
-            // Process Logic
-            const response = await processLogic(text, currentAttachment);
-            
-            // Reset Attachment
-            clearAttachment();
-            
-            typingIndicator.classList.add('hidden');
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-lg bg-slate-700 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-md">U</div>
+                <div class="bg-blue-700 border-blue-600 border p-4 rounded-2xl text-sm text-white max-w-[85%] leading-relaxed shadow-xl flex flex-col items-end">
+                    ${contentHtml}
+                </div>
+            `;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
 
-            if (response.type === 'video') addVideoMessage(response.src, response.alt, response.fx);
-            else if (response.type === 'image') addImageMessage(response.src, response.alt);
-            else if (response.type === 'music') { addMessage(response.text, 'ai'); startMusicSequence(response.style); }
-            else addMessage(response, 'ai', true); 
-            
-            if(window.MathJax) MathJax.typesetPromise();
-        });
+        function postImage(url) {
+            const div = document.createElement('div');
+            div.className = "message-anim flex items-start space-x-3";
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">J</div>
+                <div class="bg-slate-800 border border-slate-700 p-2 rounded-2xl max-w-[85%] shadow-xl">
+                    <div class="render-container">
+                        <img src="${url}" class="render-image" alt="J-AI Image">
+                    </div>
+                    <p class="mt-2 text-[10px] text-slate-500 font-mono uppercase text-center">J-AI Neural Render Complete</p>
+                </div>
+            `;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
 
-        // --- FILE HANDLING ---
+        // --- ATTACHMENT HANDLER ---
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
             reader.onload = (event) => {
-                currentAttachment = event.target.result;
-                previewThumb.src = currentAttachment;
-                attachmentArea.classList.remove('hidden');
-                userInput.focus();
+                stagedImage = event.target.result;
+                previewImg.src = stagedImage;
+                attachmentPreview.classList.remove('hidden');
+                userIn.focus();
             };
             reader.readAsDataURL(file);
+            fileInput.value = ''; // Reset for re-selection
         });
 
-        function clearAttachment() {
-            currentAttachment = null;
-            fileInput.value = '';
-            attachmentArea.classList.add('hidden');
-        }
+        removeAttachmentBtn.addEventListener('click', () => {
+            stagedImage = null;
+            attachmentPreview.classList.add('hidden');
+        });
 
-        // --- UI HELPERS ---
-        function addMessage(text, sender, isHTML = false) {
-            const div = document.createElement('div');
-            div.className = `flex items-start space-x-3 message-anim ${sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`;
-            const bubbleClass = sender === 'ai' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-cyan-700 text-white';
-            let content = isHTML ? text : text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-            div.innerHTML = `<div class="w-8 h-8 rounded flex-shrink-0 flex items-center justify-center text-xs font-bold ${sender === 'ai' ? 'bg-indigo-600' : 'bg-slate-700'} text-white">${sender === 'ai' ? 'J' : 'U'}</div><div class="p-4 max-w-[90%] rounded-2xl shadow-xl border ${bubbleClass} text-sm leading-relaxed">${content}</div>`;
-            chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        function addImageMessage(src, alt) {
-            const div = document.createElement('div');
-            div.className = "flex items-start space-x-3 message-anim";
-            div.innerHTML = `<div class="w-8 h-8 rounded bg-indigo-600 flex-shrink-0 flex items-center justify-center text-xs text-white">J</div><div class="p-3 bg-slate-800 border border-slate-700 rounded-2xl"><div class="gen-image"><img src="${src}" onerror="this.parentElement.innerHTML='Error'"></div></div>`;
-            chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        function addVideoMessage(src, alt, fxType) {
-            const div = document.createElement('div');
-            div.className = "flex items-start space-x-3 message-anim";
-            const videoId = "video-" + Date.now();
-            div.innerHTML = `<div class="w-8 h-8 rounded bg-indigo-600 flex-shrink-0 flex items-center justify-center text-xs text-white">J</div><div class="p-3 bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-[512px]"><div class="video-wrapper" id="${videoId}"><div class="rec-tag"><div class="rec-dot"></div>REC</div><canvas class="video-canvas"></canvas><img src="${src}" class="video-content" onload="initVideoFX(document.getElementById('${videoId}'), '${fxType}')"></div></div>`;
-            chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        function clearChat() { chatContainer.innerHTML = ''; }
+        execBtn.addEventListener('click', processJAI);
+        userIn.addEventListener('keypress', (e) => { if(e.key === 'Enter') processJAI(); });
     </script>
 </body>
 </html>
