@@ -13,7 +13,7 @@
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .message-anim { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .render-container { border: 1px solid #3b82f6; border-radius: 12px; overflow: hidden; margin-top: 10px; background: #000; box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+        .render-container { border: 1px solid #3b82f6; border-radius: 12px; overflow: hidden; margin-top: 10px; background: #000; box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); min-height: 200px; display: flex; align-items: center; justify-content: center; }
         .render-image { width: 100%; height: auto; display: block; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
@@ -29,8 +29,8 @@
             <div>
                 <h1 class="font-bold text-white tracking-tight">J-AI</h1>
                 <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Online</span>
+                    <span id="status-dot" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span id="status-text" class="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Online</span>
                 </div>
             </div>
         </div>
@@ -43,7 +43,7 @@
             <div class="bg-slate-800/50 border border-slate-700/50 p-4 rounded-2xl rounded-tl-none text-sm text-slate-200 max-w-[85%] backdrop-blur-sm shadow-xl">
                 System Initialized. I am **J-AI**. 
                 <br><br>
-                Canvas disabled. Running on direct neural bridge.
+                Canvas disabled. Running on direct neural bridge with local fail-safe.
             </div>
         </div>
     </main>
@@ -86,28 +86,36 @@
         const attachmentPreview = document.getElementById('attachment-preview');
         const previewImg = document.getElementById('preview-img');
         const removeAttachmentBtn = document.getElementById('remove-attachment');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
 
         let stagedImage = null;
+
+        // Fallback responses if API is busy
+        function getLocalResponse(query) {
+            const q = query.toLowerCase();
+            if (q.includes('hi') || q.includes('hello')) return "Greetings! I am operating in local mode.";
+            if (q.includes('who are you')) return "I am J-AI, created by Jasper.";
+            if (q.includes('time')) return "Local system time: " + new Date().toLocaleTimeString();
+            if (q.includes('date')) return "Local system date: " + new Date().toLocaleDateString();
+            return "My neural cloud is currently experiencing high traffic. I can still scan images (OCR) or generate art if you use the 'Draw' command.";
+        }
 
         async function processJAI() {
             const input = userIn.value.trim();
             if (!input && !stagedImage) return;
 
-            // UI: Post user message
             postUserMessage(input, stagedImage);
             
-            // Capture state for processing
             const processingImage = stagedImage;
             const query = input.toLowerCase();
 
-            // Clear Inputs
             userIn.value = '';
             stagedImage = null;
             attachmentPreview.classList.add('hidden');
-            
             typing.classList.remove('hidden');
 
-            // 1. Process Image Attachment (OCR) if present
+            // 1. Process Image Attachment (OCR)
             let contextText = "";
             if (processingImage) {
                 try {
@@ -115,17 +123,13 @@
                     const extractedText = result.data.text.trim();
                     if (extractedText) {
                         contextText = ` [System Note: The user attached an image containing this text: "${extractedText}"]`;
-                        // Optionally inform user OCR worked
-                        // postMessage(`**OCR Info:** Read ${extractedText.length} characters from image.`, 'ai'); 
-                    } else {
-                        contextText = ` [System Note: The user attached an image, but no text was detected.]`;
                     }
                 } catch (e) {
                     console.error("OCR Failed");
                 }
             }
 
-            // 2. Logic: Is it a drawing request?
+            // 2. Logic
             const drawingTriggers = ['draw', 'generate', 'create', 'image', 'picture', 'painting'];
             const isDrawing = drawingTriggers.some(word => query.includes(word)) && !processingImage;
 
@@ -139,14 +143,37 @@
                     typing.classList.add('hidden');
                 }, 500);
             } else {
-                // Generate Text Response (with image context if available)
+                // Generate Text
                 try {
                     const fullPrompt = input + contextText;
-                    const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(fullPrompt)}?system=You are J-AI, a helpful AI created by Jasper. You are fast and accurate. Never mention Google or Gemini.`);
+                    // Add timeout to fetch to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
+                    const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(fullPrompt)}?system=You are J-AI, a helpful AI created by Jasper. You are fast and accurate. Never mention Google or Gemini.`, {
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (!res.ok) throw new Error("API Limit");
+                    
                     const data = await res.text();
                     postMessage(data, 'ai');
+                    
+                    // Reset status to online if successful
+                    statusDot.classList.remove('bg-yellow-500');
+                    statusDot.classList.add('bg-green-500');
+                    statusText.innerText = "Online";
+
                 } catch (e) {
-                    postMessage("Neural connection flickered. Please try that again.", 'ai');
+                    // Fail-safe Mode
+                    console.warn("Switching to Local Fallback");
+                    statusDot.classList.remove('bg-green-500');
+                    statusDot.classList.add('bg-yellow-500');
+                    statusText.innerText = "Local Mode";
+                    
+                    const localReply = getLocalResponse(input);
+                    postMessage(localReply, 'ai');
                 }
                 typing.classList.add('hidden');
             }
@@ -198,7 +225,7 @@
                 <div class="w-8 h-8 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">J</div>
                 <div class="bg-slate-800 border border-slate-700 p-2 rounded-2xl max-w-[85%] shadow-xl">
                     <div class="render-container">
-                        <img src="${url}" class="render-image" alt="J-AI Image">
+                        <img src="${url}" class="render-image" alt="J-AI Image" onerror="this.parentElement.innerHTML='<p class=\'p-4 text-xs text-red-400\'>Visual Feed Interrupted. Try again.</p>'">
                     </div>
                     <p class="mt-2 text-[10px] text-slate-500 font-mono uppercase text-center">J-AI Neural Render Complete</p>
                 </div>
@@ -220,7 +247,7 @@
                 userIn.focus();
             };
             reader.readAsDataURL(file);
-            fileInput.value = ''; // Reset for re-selection
+            fileInput.value = '';
         });
 
         removeAttachmentBtn.addEventListener('click', () => {
